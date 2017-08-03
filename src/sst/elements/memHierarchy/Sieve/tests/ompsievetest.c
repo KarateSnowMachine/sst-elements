@@ -30,6 +30,8 @@ int main(int argc, char* argv[]) {
 
     const int n = 20;
     int** the_array = (int**) malloc(sizeof(int*) * n);
+    printf("malloc'd\n");
+    fflush(stdout);
 
     int i = 0;
     #pragma omp parallel for
@@ -40,6 +42,8 @@ int main(int argc, char* argv[]) {
             the_array[i][j] = 0;    // initialize
         }
     }
+    printf("Array init'd\n");
+    fflush(stdout);
 
     #pragma omp parallel for
     for(i = 0; i < n; ++i) {
@@ -53,6 +57,8 @@ int main(int argc, char* argv[]) {
 	    }
 	}
     }
+    printf("Array triangled\n");
+    fflush(stdout);
     
     // Now have a triangle matrix, no do something with std lib
     std::vector<int> rowSums;
@@ -62,10 +68,14 @@ int main(int argc, char* argv[]) {
             rowSums[i] += the_array[i][j];
         }
     }
+    printf("rowsums\n");
+    fflush(stdout);
 
     printf("The vector is:\n");
     for (std::vector<int>::iterator it = rowSums.begin(); it != rowSums.end(); it++) {
 	    printf("%d\n", *it);
     }
+    printf("done!\n");
+    fflush(stdout);
 
 }

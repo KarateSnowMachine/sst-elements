@@ -839,7 +839,6 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                        IARG_END);
 
         RTN_Close(rtn);
-        fprintf(stderr, "Replacement complete\n");
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
                 RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free" || RTN_Name(rtn) == "_gfortran_free")) {
 
@@ -852,7 +851,6 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                 IARG_END);
 
         RTN_Close(rtn);
-        fprintf(stderr, "Replacement complete\n");
     } else if (RTN_Name(rtn) == "ariel_output_stats" || RTN_Name(rtn) == "_ariel_output_stats" || RTN_Name(rtn) == "__arielfort_MOD_ariel_output_stats") {
         fprintf(stderr, "Identified routine: ariel_output_stats, replacing with Ariel equivalent..\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats);
@@ -864,6 +862,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete\n");
         return;
     }
+
 }
 
 
@@ -893,9 +892,6 @@ int main(int argc, char *argv[])
 
     PIN_InitLock(&mainLock);
     PIN_InitLock(&mallocIndexLock);
-    
-    printf("Symbols and locks init'd\n");
-    cout << flush;
 
     if(SSTVerbosity.Value() > 0) {
         std::cout << "SSTARIEL: Loading Ariel Tool to connect to SST on pipe: " <<
@@ -921,8 +917,7 @@ int main(int argc, char *argv[])
     } else {
 		fprintf(stderr, "ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.\n");
     }
-    printf("Creating tunnel and malloc structures\n");
-    cout << flush;
+
     core_count = MaxCoreCount.Value();
 
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
@@ -935,9 +930,6 @@ int main(int argc, char *argv[])
         rtnNameMap = fopen("routine_name_map.txt", "wt");
         instPtrsList.resize(core_count);    // Need core_count sets of instruction pointers (to avoid locks)
     }
-    
-    printf("Opened rtnNameMap, initing structures for shadow stack\n");
-    cout << flush;
 
     for(int i = 0; i < core_count; i++) {
     	lastMallocSize[i] = (UINT64) 0;
@@ -961,8 +953,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("Finished setting up shadow stack structures\n");
-
     fprintf(stderr, "ARIEL-SST PIN tool activating with %" PRIu32 " threads\n", core_count);
     fflush(stdout);
 
@@ -982,13 +972,10 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "ARIEL: Initial mode will be to enable profiling unless ariel_enable function is located\n");
 		enable_output = true;
     }
-    
-    printf("Calling INS_AddInstrumentFunction\n"); cout << flush;
+
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
-    printf("Calling RTN_AddInstrumentFunction\n"); cout << flush;
     RTN_AddInstrumentFunction(InstrumentRoutine, 0);
     
-    printf("Calling TRACE_AddInstrumentFunction\n"); cout << flush;
     // Instrument traces to capture stack
     if (KeepMallocStackTrace.Value() == 1)
         TRACE_AddInstrumentFunction(InstrumentTrace, 0);
