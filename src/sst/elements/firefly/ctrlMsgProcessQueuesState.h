@@ -41,6 +41,8 @@ static const key_t LongRspKey  = 2 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadReqKey  = 3 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadRspKey  = 0 << (sizeof(key_t) * 8 - 2);
 
+typedef int region_t;
+
 class MemoryBase;
 
 class ProcessQueuesState : SubComponent
@@ -96,7 +98,7 @@ class ProcessQueuesState : SubComponent
     void enterWait( WaitReq*, uint64_t exitDelay = 0 );
     void enterMakeProgress( uint64_t exitDelay = 0 );
 
-    void needRecv( int, int, size_t );
+    void needRecv( int, size_t );
 
   private:
 
@@ -132,14 +134,14 @@ class ProcessQueuesState : SubComponent
 			}
 
             ioVec[0].len = sizeof(hdr);
-            ioVec[0].addr.simVAddr = heap.alloc(ioVec[0].len);
-            ioVec[0].addr.backing = &hdr;
+            ioVec[0].addr.setSimVAddr( heap.alloc(ioVec[0].len) );
+            ioVec[0].addr.setBacking( &hdr );
 
             if ( length ) {
                 buf.resize( length );
             	ioVec[1].len = length;
-            	ioVec[1].addr.simVAddr = heap.alloc(length);;
-            	ioVec[1].addr.backing = &buf[0];
+            	ioVec[1].addr.setSimVAddr( heap.alloc(length) );
+            	ioVec[1].addr.setBacking( &buf[1] );
             } else {
 				assert(0);
 			}
@@ -148,7 +150,7 @@ class ProcessQueuesState : SubComponent
         }
 		~ShortRecvBuffer() {
 			for ( unsigned i = 0; i < ioVec.size(); i++) {
-				heap.free( ioVec[i].addr.simVAddr );
+				heap.free( ioVec[i].addr.getSimVAddr() );
 			}
 		}
 
@@ -160,7 +162,7 @@ class ProcessQueuesState : SubComponent
 
     struct LoopReq : public Msg {
         LoopReq(int _srcCore, std::vector<IoVec>& _vec, void* _key ) :
-            Msg( (MatchHdr*)_vec[0].addr.backing ), 
+            Msg( (MatchHdr*)_vec[0].addr.getBacking() ), 
             srcCore( _srcCore ), vec(_vec), key( _key) 
         {
             m_ioVec.push_back( vec[1] ); 
