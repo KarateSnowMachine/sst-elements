@@ -824,7 +824,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
                 RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc" || RTN_Name(rtn) == "__libc_malloc" || RTN_Name(rtn) == "__libc_memalign" || RTN_Name(rtn) == "_gfortran_malloc")) {
     		
-        fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
+        fprintf(stderr, "Identified routine: malloc (%s), replacing with Ariel equivalent...\n", RTN_Name(rtn).c_str());
         RTN_Open(rtn);
 
         RTN_InsertCall(rtn, IPOINT_BEFORE,
@@ -842,7 +842,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
                 RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free" || RTN_Name(rtn) == "__libc_free" || RTN_Name(rtn) == "_gfortran_free")) {
 
-        fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
+        fprintf(stderr, "Identified routine: free/_free (%s), replacing with Ariel equivalent...\n", RTN_Name(rtn).c_str());
         RTN_Open(rtn);
 
         RTN_InsertCall(rtn, IPOINT_BEFORE,

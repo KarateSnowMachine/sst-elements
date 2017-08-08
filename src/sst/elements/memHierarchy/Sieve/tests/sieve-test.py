@@ -23,7 +23,7 @@ appArgs = ({
 ariel = sst.Component("a0", "ariel.ariel")
 ariel.addParams(appArgs)
 ariel.addParams({
-    "verbose" : 1,
+    "verbose" : 2,
     "alloctracker" : 1,
     "clock" : clock,
     "maxcorequeue" : 256,
