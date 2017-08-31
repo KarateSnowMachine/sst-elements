@@ -341,7 +341,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output,
 			maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, this,
 			memmgr, perform_checks, params);
-        cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+        cpu_to_cache_links[i] = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
         cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
 
 		// Set max number of instructions
@@ -388,6 +388,10 @@ void ArielCPU::init(unsigned int phase)
 
         tunnel->waitForChild();
         output->verbose(CALL_INFO, 1, 0, "Child has attached!\n");
+    }
+
+    for (uint32_t i = 0; i < core_count; i++) { 
+        cpu_to_cache_links[i]->init(phase);
     }
 }
 
@@ -444,7 +448,7 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	the_child = fork();
     if ( the_child < 0 ) {
         perror("fork");
-        output->fatal(CALL_INFO, 1, "Fork failed to launch the traced process. errno = %d\n", errno);
+        output->fatal(CALL_INFO, 1, "Fork failed to launch the traced process. errno = %d, errstr = %s\n", errno, strerror(errno));
     }
 
 	if(the_child != 0) {

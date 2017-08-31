@@ -66,7 +66,26 @@
 #include "mpi/motifs/emberunstructured.h" //NetworkSim: added unstructured communication motif
 #include "mpi/motifs/embersiriustrace.h"
 #include "mpi/motifs/emberrandomgen.h"
+
 #include "shmem/motifs/emberShmemTest.h"
+#include "shmem/motifs/emberShmemWait.h"
+#include "shmem/motifs/emberShmemWaitUntil.h"
+#include "shmem/motifs/emberShmemPut.h"
+#include "shmem/motifs/emberShmemGet.h"
+#include "shmem/motifs/emberShmemPutv.h"
+#include "shmem/motifs/emberShmemGetv.h"
+#include "shmem/motifs/emberShmemFadd.h"
+#include "shmem/motifs/emberShmemCswap.h"
+#include "shmem/motifs/emberShmemSwap.h"
+#include "shmem/motifs/emberShmemBarrierAll.h"
+#include "shmem/motifs/emberShmemBarrier.h"
+#include "shmem/motifs/emberShmemBroadcast.h"
+#include "shmem/motifs/emberShmemCollect.h"
+#include "shmem/motifs/emberShmemFcollect.h"
+#include "shmem/motifs/emberShmemAlltoall.h"
+#include "shmem/motifs/emberShmemAlltoalls.h"
+#include "shmem/motifs/emberShmemReduction.h"
+
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -282,6 +301,90 @@ load_ShmemTest( Component* comp, Params& params ) {
 	return new EmberShmemTestGenerator(comp, params);
 }
 
+static SubComponent*
+load_ShmemPut( Component* comp, Params& params ) {
+	return new EmberShmemPutGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemPutv( Component* comp, Params& params ) {
+	return new EmberShmemPutvGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemGet( Component* comp, Params& params ) {
+	return new EmberShmemGetGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemGetv( Component* comp, Params& params ) {
+	return new EmberShmemGetvGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemFadd( Component* comp, Params& params ) {
+	return new EmberShmemFaddGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemCswap( Component* comp, Params& params ) {
+	return new EmberShmemCswapGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemSwap( Component* comp, Params& params ) {
+	return new EmberShmemSwapGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemWait( Component* comp, Params& params ) {
+	return new EmberShmemWaitGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemWaitUntil( Component* comp, Params& params ) {
+	return new EmberShmemWaitUntilGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemBarrierAll( Component* comp, Params& params ) {
+	return new EmberShmemBarrierAllGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemBarrier( Component* comp, Params& params ) {
+	return new EmberShmemBarrierGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemBroadcast( Component* comp, Params& params ) {
+	return new EmberShmemBroadcastGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemFcollect( Component* comp, Params& params ) {
+	return new EmberShmemFcollectGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemCollect( Component* comp, Params& params ) {
+	return new EmberShmemCollectGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoall( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemAlltoalls( Component* comp, Params& params ) {
+	return new EmberShmemAlltoallsGenerator(comp, params);
+}
+
+static SubComponent*
+load_ShmemReduction( Component* comp, Params& params ) {
+	return new EmberShmemReductionGenerator(comp, params);
+}
 
 //NetworkSim: loader for the stop motif
 static SubComponent*
@@ -1082,6 +1185,142 @@ static const ElementInfoSubComponent subcomponents[] = {
 	"SHMEM test",
 	NULL,
 	load_ShmemTest,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutMotif",
+	"SHMEM put",
+	NULL,
+	load_ShmemPut,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemPutvMotif",
+	"SHMEM putv",
+	NULL,
+	load_ShmemPutv,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetMotif",
+	"SHMEM get",
+	NULL,
+	load_ShmemGet,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemGetvMotif",
+	"SHMEM getv",
+	NULL,
+	load_ShmemGetv,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemWaitMotif",
+	"SHMEM wait test",
+	NULL,
+	load_ShmemWait,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemWaitUntilMotif",
+	"SHMEM wait_until test",
+	NULL,
+	load_ShmemWaitUntil,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFaddMotif",
+	"SHMEM fadd",
+	NULL,
+	load_ShmemFadd,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCswapMotif",
+	"SHMEM cswap",
+	NULL,
+	load_ShmemCswap,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemSwapMotif",
+	"SHMEM swap",
+	NULL,
+	load_ShmemSwap,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBarrierAllMotif",
+	"SHMEM barrier_all",
+	NULL,
+	load_ShmemBarrierAll,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBarrierMotif",
+	"SHMEM barrier",
+	NULL,
+	load_ShmemBarrier,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemBroadcastMotif",
+	"SHMEM broadcast",
+	NULL,
+	load_ShmemBroadcast,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemFcollectMotif",
+	"SHMEM fcollect",
+	NULL,
+	load_ShmemFcollect,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemCollectMotif",
+	"SHMEM collect",
+	NULL,
+	load_ShmemCollect,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoallMotif",
+	"SHMEM alltoall",
+	NULL,
+	load_ShmemAlltoall,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemAlltoallsMotif",
+	"SHMEM alltoalls",
+	NULL,
+	load_ShmemAlltoalls,
+    shmemTest_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ShmemReductionMotif",
+	"SHMEM reduction",
+	NULL,
+	load_ShmemReduction,
     shmemTest_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
