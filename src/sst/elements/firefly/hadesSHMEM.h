@@ -46,9 +46,18 @@ class HadesSHMEM : public Shmem::Interface
     class DelayEvent : public SST::Event {
       public:
 
+		enum { One, Two } type;
+        DelayEvent( Callback callback ) :
+            Event(),
+			type( One ),
+            m_callback1( callback )
+        {
+		}
+
         DelayEvent( Shmem::Callback callback, int retval ) :
             Event(),
-            m_callback( callback ),
+			type( Two ),
+            m_callback2( callback ),
             m_retval( retval )
         {
             //printf("%s() %p\n",__func__,this);
@@ -58,7 +67,8 @@ class HadesSHMEM : public Shmem::Interface
             //printf("%s() %p\n",__func__,this);
         }
 
-        Shmem::Callback m_callback;
+        Callback 		m_callback1;
+        Shmem::Callback m_callback2;
         int m_retval;
 
         NotSerializable(DelayEvent)
@@ -74,6 +84,15 @@ class HadesSHMEM : public Shmem::Interface
         };
       public:
         Heap( bool back = false ) : m_curAddr(0x1000), m_back(back) {}
+		~Heap() { 
+            std::map<Hermes::Vaddr,Entry>::iterator iter = m_map.begin();
+            for ( ; iter != m_map.end(); ++iter ) {
+                Entry& entry = iter->second;
+				if ( entry.addr.getBacking()  ) {
+                	::free( entry.addr.getBacking() );
+				}
+			}
+		}
         Hermes::MemAddr malloc( size_t n ) {
             Hermes::MemAddr addr( Hermes::MemAddr::Shmem );
             addr.setSimVAddr( m_curAddr );
@@ -115,7 +134,7 @@ class HadesSHMEM : public Shmem::Interface
 
   public:
     HadesSHMEM(Component*, Params&);
-    ~HadesSHMEM() { delete m_heap; }
+    ~HadesSHMEM();
 
     virtual void setup();
     virtual void finish() {}
@@ -127,84 +146,118 @@ class HadesSHMEM : public Shmem::Interface
     }
 
     virtual void init(Shmem::Callback);
+    virtual void init2(Shmem::Callback);
     virtual void finalize(Shmem::Callback);
+    virtual void finalize2(Shmem::Callback);
 
     virtual void n_pes(int*, Shmem::Callback);
+    virtual void n_pes2(int*, Shmem::Callback);
     virtual void my_pe(int*, Shmem::Callback);
+    virtual void my_pe2(int*, Shmem::Callback);
 
     virtual void fence(Shmem::Callback);
+    virtual void fence2(Shmem::Callback);
     virtual void quiet(Shmem::Callback);
+    virtual void quiet2(Shmem::Callback);
 
     virtual void barrier_all(Shmem::Callback);
+    virtual void barrier_all2(Shmem::Callback);
     virtual void barrier( int start, int stride, int size, Vaddr, Shmem::Callback);
+    virtual void barrier2( int start, int stride, int size, Vaddr, Shmem::Callback);
     virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void broadcast2( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void fcollect2( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void collect2( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void alltoall2( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, 
                         int PE_start, int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
+    virtual void alltoalls2( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, 
+                        int PE_start, int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
-                        int logPE_stride, int PE_size, Vaddr pWrk, Vaddr pSync,
+                        int logPE_stride, int PE_size, Vaddr pSync,
+                        Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
+    virtual void reduction2( Vaddr dest, Vaddr source, int nelems, int PE_start,
+                        int logPE_stride, int PE_size, Vaddr pSync,
                         Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void malloc(Hermes::MemAddr*,size_t,Shmem::Callback);
-    virtual void malloc(Hermes::MemAddr*,size_t,Callback);
+    virtual void malloc2(Hermes::MemAddr*,size_t,Shmem::Callback);
     virtual void free(Hermes::MemAddr*,Shmem::Callback);
 
+    virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
+    virtual void getv2(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
     virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+
+    virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
+    virtual void putv2(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
     virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+
     virtual void putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
             Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
-
-    virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
-    virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
+    virtual void putOp2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
+            Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void wait_until(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, Shmem::Callback);
+    virtual void wait_until2(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, Shmem::Callback);
 
     virtual void cswap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback);
-    virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
-    virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
+    virtual void cswap2( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback);
 
-    void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback ) {
-        dbg().verbose(CALL_INFO,1,1,"dest=%#" PRIx64 " src=%#" PRIx64 " length=%d\n",dest,src,length);
-        if ( dest != src ) {
-            ::memcpy( m_heap->findBacking(dest), m_heap->findBacking(src), length );
-        }
-        m_selfLink->send( 0, new DelayEvent( callback, 0 ) );
-    }
+    virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
+    virtual void swap2( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
+    virtual void add(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
+    virtual void add2(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
+    virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
+    virtual void fadd2( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
+
+    void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback );
+
+    void delay( Shmem::Callback callback, uint64_t delay, int retval );
 
     void* getBacking( Hermes::Vaddr addr ) {
         return m_heap->findBacking(addr);
     }
 
-    void delay( Shmem::Callback callback, uint64_t delay, int retval ) {
-        //printf("%s() delay=%lu retval=%d\n",__func__,delay,retval);
-        m_selfLink->send( delay, new DelayEvent( callback, retval ) );
-    } 
-
   private:
+    virtual void malloc(Hermes::MemAddr*,size_t,Callback);
     Output m_dbg;
     Output& dbg() { return m_dbg; }
     Hades*      m_os;
 
+	void delayEnter( Callback callback, SimTime_t delay = 0 );
+	void delayEnter( Shmem::Callback callback, SimTime_t delay = 0 );
+	void delayReturn( Shmem::Callback callback, SimTime_t delay = 0 );
+
     void handleToDriver(SST::Event* e) {
-        dbg().verbose(CALL_INFO,1,1,"%p event=%p\n",this,e);
         DelayEvent* event = static_cast<DelayEvent*>(e);
-        //dbg().verbose(CALL_INFO,1,1,"\n");
-        event->m_callback( event->m_retval );
-        //dbg().verbose(CALL_INFO,1,1,"\n");
+		if ( DelayEvent::One == event->type ) {
+        	event->m_callback1();
+		} else {
+        	event->m_callback2( event->m_retval );
+		}
         delete e;
-        //dbg().verbose(CALL_INFO,1,1,"event=%p\n",e);
     }
 
     FunctionSM& functionSM() { return m_os->getFunctionSM(); }
     SST::Link*      m_selfLink;
 
     Heap* m_heap;
+
+	SimTime_t m_returnLat_ns;
+	SimTime_t m_enterLat_ns;
 
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;
@@ -221,6 +274,8 @@ class HadesSHMEM : public Shmem::Interface
     Hermes::MemAddr  m_localData;
     Hermes::MemAddr  m_pSync;
     Hermes::MemAddr  m_localScratch;
+    Hermes::MemAddr  m_pendingRemoteOps;
+    Hermes::Value    m_zero;
 };
 
 }

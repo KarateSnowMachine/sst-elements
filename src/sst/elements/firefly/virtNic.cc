@@ -28,10 +28,7 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
     m_notifyGetDone(NULL),
     m_notifySendPioDone(NULL),
     m_notifyRecvDmaDone(NULL),
-    m_notifyNeedRecv(NULL),
-    m_numPendingShmem(0),
-    m_maxPendingShmem(1),
-    m_shmemBlockedCallback(NULL)
+    m_notifyNeedRecv(NULL)
 {
     m_dbg.init("@t:VirtNic::@p():@l ", 
         params.find<uint32_t>("verboseLevel",0),
@@ -115,19 +112,9 @@ void VirtNic::handleMsgEvent( NicRespEvent* event )
 }
 void VirtNic::handleShmemEvent( NicShmemRespBaseEvent* event )
 {
-    if ( event->type == NicShmemRespBaseEvent::FreeCmd ) {
-        m_dbg.verbose(CALL_INFO,2,0,"pending=%d\n",m_numPendingShmem);
-        assert( m_numPendingShmem );
-        --m_numPendingShmem;
-        if ( m_shmemBlockedCallback ) {
-            m_shmemBlockedCallback();
-            m_shmemBlockedCallback = NULL;
-        }
-    } else {
-        m_dbg.verbose(CALL_INFO,2,0,"\n");
-        NicShmemRespBaseEvent* ev = static_cast<NicShmemRespBaseEvent*>(event);
-        ev->callback();
-    }
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    NicShmemRespBaseEvent* ev = static_cast<NicShmemRespBaseEvent*>(event);
+    ev->callback();
 }
 
 bool VirtNic::canDmaSend()
@@ -172,27 +159,16 @@ void VirtNic::regMem( int node, int tag, std::vector<IoVec>& vec, void* key )
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
-void VirtNic::shmemBlocked( Callback callback ) {
-    if ( m_numPendingShmem == m_maxPendingShmem ) {
-        m_shmemBlockedCallback = callback;
-    } else {
-        callback();
-    } 
+void VirtNic::shmemInit( Hermes::Vaddr addr, Callback callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemInitCmdEvent( addr, callback ) );
 }
 
 void VirtNic::shmemRegMem( Hermes::MemAddr& addr, size_t len, Callback callback )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemRegMemCmdEvent( addr, len, callback ) );
-}
-
-void VirtNic::shmemFence( Callback callback )
-{
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
-    assert(0);
-#if 0
-    sendCmd(0, new NicShmemCmdEvent( NicShmemCmdEvent::Fence, callback ) );
-#endif
 }
 
 void VirtNic::shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback callback )
@@ -242,6 +218,12 @@ void VirtNic::shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Her
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemCswapCmdEvent( calcCoreId(node), calcRealNicId(node), dest, cond, value, callback ) );
+}
+
+void VirtNic::shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value& value, Callback callback )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemAddCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
 }
 
 void VirtNic::shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV callback )

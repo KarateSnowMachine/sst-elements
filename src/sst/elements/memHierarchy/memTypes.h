@@ -26,9 +26,9 @@ using namespace std;
 
 
 // Command attributes
-enum class CommandClass { Request, Data, Ack, ForwardRequest };     // Also corresponds to the typical virtual channels
+enum class CommandClass { Request, Data, Ack, ForwardRequest };     // TODO - route messages on VCs based on command class
 enum class BasicCommandClass {Request, Response};                   // Whether a command is a request or response
-enum class MemEventType { Cache, Move };                            // For parsing which kind of event a MemEventBase is
+enum class MemEventType { Cache, Move, Custom };                    // For parsing which kind of event a MemEventBase is, 'Custom' is a catchall for types memH doesn't know about
 
 
 
@@ -73,6 +73,25 @@ enum class MemEventType { Cache, Move };                            // For parsi
     X(Put,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(Get,              AckMove,        Request,    Request,        1, 0,   Move) \
     X(AckMove,          NULLCMD,        Response,   Ack,            0, 0,   Move) \
+    /* Atomic Requests*/\
+    X(AMOFetchAdd,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Add */\
+    X(AMOFetchSub,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Sub */\
+    X(AMOFetchOr,       AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Or */\
+    X(AMOFetchAnd,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and And */\
+    X(AMOFetchXor,      AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Xor */\
+    X(AMOFetchNand,     AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Fetch and Nand */\
+    X(AMOCAS,           AckMove,        Request,    Request,        1, 0,   Move)   /* AMO: Compare and Swap */\
+    /* Extended Requests */\
+    X(ExtReq,           ExtResp,        Request,    Request,        1, 0,   Custom) /* Extended Request: Custom request with response */\
+    X(ExtResp,          NULLCMD,        Response,   Data,           0, 0,   Custom) /* Extended Response: Used for custom memory operation responses */\
+    X(ExtAck,           NULLCMD,        Response,   Ack,            0, 0,   Custom) /* Extended Response: Used for custom memory operation acks */\
+    /* Custom request types. Use to extend memH events by creating a memEventBase-derivative with \
+     * memEventBase.cmd set to one of these and custom commands defined in the derivative. See memEventInit (and its derivatives) for an example\
+     * Note there is one req for each typical traffic class (request, data, ack) - memH may in the future sort network traffic by class\
+     */\
+    X(CustomReq,        CustomResp,     Request,    Request,        1, 0,   Custom) \
+    X(CustomResp,       NULLCMD,        Response,   Data,           0, 0,   Custom) \
+    X(CustomAck,        NULLCMD,        Response,   Ack,            0, 0,   Custom)
 
 /** Valid commands for the MemEvent */
 enum class Command {
